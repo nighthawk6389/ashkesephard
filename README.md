@@ -48,7 +48,7 @@ Every 15 minutes a GitHub Action (`.github/workflows/email-bot.yml`) checks the 
        Add every address someone might send from.
      - `ADMIN_EMAIL` (optional): gets a copy of every new recipe and of anything the bot gives up on.
    - Variables tab: `SITE_URL` = the Vercel address, e.g. `https://ashkesephard.vercel.app`.
-4. **Point the site's buttons at the inbox**: put the bot's address in `site/config.js` (`recipesEmail`).
+4. **The site's buttons** send to the address in `site/config.js` (`recipesEmail`), currently `ashkesephard.recipes@gmail.com`. Change it there if the bot ever gets a new inbox.
 5. **Test it**: Actions → Recipe Email Bot → Run workflow, tick **self test**. It logs in to Gmail, checks sending, and has Claude read a sample recipe, without changing anything. Then send a real email from a family address and wait for the reply.
 
 To add someone later, edit the `FAMILY_SENDERS` secret.
