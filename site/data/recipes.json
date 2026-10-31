@@ -2,7 +2,7 @@
  "schema_version": "2.0",
  "source": "https://ashkesephardfamilyrecipes.blogspot.com",
  "imported_at": "2026-10-31T01:57:54+00:00",
- "total": 188,
+ "total": 189,
  "cooks": [
   "Abba",
   "Alex",
@@ -11,6 +11,7 @@
   "Doda Pnena",
   "Elior",
   "Ema",
+  "Ilan",
   "Orlee",
   "Saba",
   "Savta",
@@ -25373,6 +25374,144 @@
    "published": "2025-10-26",
    "updated": "2025-10-26",
    "summary": "With ground beef, eggs, breadcrumbs & garlic."
+  },
+  {
+   "number": 189,
+   "title": "Ilan's Yellow Rice",
+   "slug": "ilan-s-yellow-rice",
+   "cooks": [
+    "Ilan"
+   ],
+   "kashrut": "meat",
+   "courses": [
+    "sides"
+   ],
+   "shabbat": false,
+   "holiday": false,
+   "pesach": false,
+   "gluten_free": false,
+   "vegetarian": false,
+   "complete": true,
+   "in_progress": false,
+   "labels": [],
+   "sections": [
+    {
+     "kind": "intro",
+     "items": [
+      {
+       "text": "\"Insanely irresistibly delicious!\""
+      }
+     ]
+    },
+    {
+     "kind": "tools",
+     "items": [
+      {
+       "text": "Small saucepan"
+      },
+      {
+       "text": "Bigger pot"
+      }
+     ]
+    },
+    {
+     "kind": "ingredients",
+     "items": [
+      {
+       "text": "For the broth",
+       "sub": true
+      },
+      {
+       "text": "3 c water"
+      },
+      {
+       "text": "3 tsp chicken consomme"
+      },
+      {
+       "text": "In a bigger pot",
+       "sub": true
+      },
+      {
+       "text": "2 tbsp oil"
+      },
+      {
+       "text": "2 cloves (frozen) garlic"
+      },
+      {
+       "text": "1 tsp turmeric"
+      },
+      {
+       "text": "1/4 tsp cumin"
+      },
+      {
+       "text": "1/8 tsp cinnamon"
+      },
+      {
+       "text": "1/2 chopped onion"
+      },
+      {
+       "text": "Rice",
+       "sub": true
+      },
+      {
+       "text": "2 cups Jasmine rice"
+      }
+     ]
+    },
+    {
+     "kind": "directions",
+     "items": [
+      {
+       "text": "Put the water and chicken consomme in a small saucepan, heat up and set aside."
+      },
+      {
+       "text": "In a bigger pot, put the oil, garlic, turmeric, cumin, cinnamon and onion together and cook for 4-5 min."
+      },
+      {
+       "text": "After 4-5 min, put the dry rice in (2 cups Jasmine rice) and cook for 3 min to toast it."
+      },
+      {
+       "text": "Add the chicken broth mixture."
+      },
+      {
+       "text": "Cover and bring back to a boil."
+      },
+      {
+       "text": "Simmer for 20 min."
+      },
+      {
+       "text": "Let it settle for 10 min."
+      }
+     ]
+    }
+   ],
+   "photos": [
+    {
+     "src": "photos/family/73e38df70698c00a.webp",
+     "thumb": "photos/family/73e38df70698c00a-sm.webp",
+     "width": 1051,
+     "height": 1400,
+     "caption": "Ilan's handwritten Yellow Rice recipe, page 1"
+    },
+    {
+     "src": "photos/family/ef1bb690ad74965d.webp",
+     "thumb": "photos/family/ef1bb690ad74965d-sm.webp",
+     "width": 1051,
+     "height": 1400,
+     "caption": "Ilan's handwritten Yellow Rice recipe, page 2"
+    }
+   ],
+   "facts": [
+    "Simmer 20 minutes",
+    "Rest 10 minutes"
+   ],
+   "adapted_from": null,
+   "source_url": null,
+   "source": "email",
+   "added_by": "Ilan",
+   "published": "2026-10-30",
+   "updated": "2026-10-30",
+   "summary": "Ilan's golden jasmine rice, toasted with turmeric, cumin and a pinch of cinnamon: insanely irresistibly delicious!"
   }
  ]
 }
