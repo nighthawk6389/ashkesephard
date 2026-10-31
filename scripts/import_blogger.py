@@ -6,25 +6,35 @@ recipe (ingredients, directions, notes, tools and photos) without inventing anyt
 every line of the original post lands in some section, and each recipe links back to
 its source post. Manual corrections live in data/overrides.json.
 
+Photos are downloaded into site/photos/ (a full-size and a thumbnail WebP per photo), so the
+site does not depend on Blogger's image servers. Already-downloaded photos are reused.
+
 Usage:
   python3 scripts/import_blogger.py              # fetch the live feed
   python3 scripts/import_blogger.py --feed-dir D # reuse saved feed pages (D/*.json)
 """
 import argparse
+import hashlib
+import io
 import json
 import re
 import sys
 import time
 import unicodedata
+import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
 from bs4 import BeautifulSoup, NavigableString, Tag
+from PIL import Image, ImageOps
 
 BLOG = "https://ashkesephardfamilyrecipes.blogspot.com"
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "site" / "data" / "recipes.json"
+PHOTO_DIR = ROOT / "site" / "photos"
+FULL_SIZE, THUMB_SIZE = 1400, 640
 OVERRIDES = ROOT / "data" / "overrides.json"
 PAGE_SIZE = 150
 
@@ -596,7 +606,7 @@ def build(entries, overrides):
             "in_progress": todo or ov.get("in_progress", False),
             "labels": labels,
             "sections": sections,
-            "photos": [{"src": sized(p["src"], 1600), "thumb": sized(p["src"], 640), **({"caption": p["caption"]} if p["caption"] else {})} for p in photos],
+            "photos": [{"original": sized(p["src"], 1600), **({"caption": p["caption"]} if p["caption"] else {})} for p in photos],
             "facts": facts,
             "adapted_from": source,
             "source_url": link,
@@ -620,6 +630,70 @@ def build(entries, overrides):
     return [{"number": r.pop("number"), **r} for r in recipes]
 
 
+# ---------------------------------------------------------------- photos
+
+def photo_key(url):
+    return hashlib.sha1(url.encode()).hexdigest()[:16]
+
+
+def download_photo(url):
+    """Save a full-size and thumbnail WebP for one Blogger photo.
+
+    Returns (width, height), "gone" when the image no longer exists, or None on other failures."""
+    key = photo_key(url)
+    full, thumb = PHOTO_DIR / f"{key}.webp", PHOTO_DIR / f"{key}-sm.webp"
+    if full.exists() and thumb.exists():
+        with Image.open(full) as im:
+            return im.size
+    for attempt in range(4):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "AshkeSephardRecipeImporter/2.0"})
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                raw = resp.read()
+            image = ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert("RGB")
+            break
+        except Exception as exc:
+            if isinstance(exc, urllib.error.HTTPError) and exc.code in (404, 410):
+                print(f"  ! photo no longer exists, skipping: {url}", file=sys.stderr)
+                return "gone"
+            if attempt == 3:
+                print(f"  ! could not download {url[:90]}…: {exc}", file=sys.stderr)
+                return None
+            time.sleep(2 ** (attempt + 1))
+    big = image.copy()
+    big.thumbnail((FULL_SIZE, FULL_SIZE))
+    big.save(full, "WEBP", quality=80, method=6)
+    small = image.copy()
+    small.thumbnail((THUMB_SIZE, THUMB_SIZE))
+    small.save(thumb, "WEBP", quality=74, method=6)
+    return big.size
+
+
+def attach_photos(recipes):
+    """Point every photo at its local copy; photos that fail to download keep the Blogger URL."""
+    PHOTO_DIR.mkdir(parents=True, exist_ok=True)
+    urls = sorted({p["original"] for r in recipes for p in r["photos"]})
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        sizes = dict(zip(urls, pool.map(download_photo, urls)))
+    for r in recipes:
+        r["photos"] = [p for p in r["photos"] if sizes.get(p["original"]) != "gone"]
+        for p in r["photos"]:
+            size, key = sizes.get(p["original"]), photo_key(p["original"])
+            if size:
+                p.update(src=f"photos/{key}.webp", thumb=f"photos/{key}-sm.webp", width=size[0], height=size[1])
+            else:
+                p.update(src=p["original"], thumb=sized(p["original"], THUMB_SIZE))
+    stored = {u: size for u, size in sizes.items() if isinstance(size, tuple)}
+    keep = {f"{photo_key(u)}{suffix}.webp" for u in stored for suffix in ("", "-sm")}
+    removed = 0
+    for file in PHOTO_DIR.glob("*.webp"):
+        if file.name not in keep:
+            file.unlink()
+            removed += 1
+    print(f"Photos: {len(stored)}/{len(urls)} stored locally"
+          + (f", removed {removed} unused" if removed else ""))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--feed-dir", help="read saved Blogger feed JSON pages instead of fetching")
@@ -631,6 +705,8 @@ def main():
     overrides = json.loads(OVERRIDES.read_text()) if OVERRIDES.exists() else {}
     overrides.pop("_comment", None)
     recipes = build(entries, overrides)
+    if not args.dry_run:
+        attach_photos(recipes)
     cooks = sorted({c for r in recipes for c in r["cooks"]})
     data = {
         "schema_version": "2.0",

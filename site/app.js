@@ -3,6 +3,7 @@
 const $ = s => document.querySelector(s);
 const html = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const linkify = value => html(value).replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)"']/g, url => '<a href="'+url+'" target="_blank" rel="noopener noreferrer">'+url.replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,"")+'</a>');
+const srcset = p => ' srcset="'+html(p.thumb)+' '+Math.min(640,p.width||640)+'w, '+html(p.src)+' '+(p.width||1400)+'w" sizes="(max-width: 700px) 100vw, 700px"'+(p.width&&p.height?' width="'+p.width+'" height="'+p.height+'"':"");
 const section = (r,kind) => (r.sections||[]).find(s=>s.kind===kind);
 const KASHRUT = {"meat":"Meat","dairy":"Dairy","pareve":"Pareve","fish":"Fish · Pareve"};
 const COURSES = {"mains":"Main","soups":"Soup","salads":"Salad","sides":"Side","starters":"Starter","breakfast":"Breakfast","desserts":"Dessert","snacks":"Snack","sauces":"Sauce & dressing","guides":"Kitchen guide"};
@@ -58,7 +59,7 @@ function card(r) {
  const g=group(r), isSaved=saved.has(r.slug), photo=r.photos && r.photos[0], who=from(r);
  return '<article class="recipe-card"><div class="card-art '+g+(photo?" has-photo":"")+'"><span class="number">RECIPE '+String(r.number).padStart(3,"0")+'</span>'+
   '<span class="food-emoji" aria-hidden="true">'+emoji(r)+'</span>'+
-  (photo?'<img class="card-photo" src="'+html(photo.thumb)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':"")+
+  (photo?'<img class="card-photo" src="'+html(photo.thumb)+'" alt="" loading="lazy" decoding="async">':"")+
   '<button class="heart'+(isSaved?" saved":"")+'" type="button" data-save="'+html(r.slug)+'" aria-label="'+(isSaved?"Remove saved recipe":"Save recipe")+'">'+(isSaved?"♥":"♡")+'</button></div>'+
   '<div class="card-body"><div class="card-meta"><span class="type '+g+'">'+html(label(r))+'</span>'+(who?'<span class="time">From '+html(who)+'</span>':"")+'</div>'+
   '<h3>'+html(r.title)+'</h3><p>'+html(r.summary)+'</p><div class="card-footer"><small>'+status(r)+'</small>'+
@@ -128,13 +129,13 @@ function detail(r) {
  const photoRecipe=!r.complete || r.in_progress, lead=!photoRecipe && r.photos && r.photos[0], album=(r.photos||[]).slice(lead?1:0);
  if (album.length) {
   content+='<div class="gallery-block"><h3>'+(photoRecipe?"The recipe, in photos":"From the family album")+'</h3><div class="gallery'+(photoRecipe?" full":album.length===1?" one":"")+'">'+
-   album.map(p=>'<figure><a href="'+html(p.src)+'" target="_blank" rel="noopener noreferrer"><img src="'+html(p.thumb)+'"'+(photoRecipe?' srcset="'+html(p.thumb)+' 640w, '+html(p.src)+' 1600w" sizes="(max-width: 700px) 100vw, 700px"':"")+' alt="'+html(p.caption||r.title)+'" loading="lazy" referrerpolicy="no-referrer"></a>'+(p.caption?'<figcaption>'+html(p.caption)+'</figcaption>':"")+'</figure>').join("")+'</div></div>';
+   album.map(p=>'<figure><a href="'+html(p.src)+'" target="_blank" rel="noopener noreferrer"><img src="'+html(p.thumb)+'"'+(photoRecipe?srcset(p):"")+' alt="'+html(p.caption||r.title)+'" loading="lazy"></a>'+(p.caption?'<figcaption>'+html(p.caption)+'</figcaption>':"")+'</figure>').join("")+'</div></div>';
  }
  const credits=[r.adapted_from?'Adapted from '+linkify(r.adapted_from):null, r.source_url?'<a href="'+html(r.source_url)+'" target="_blank" rel="noopener noreferrer">View the original blog post ↗</a>':null].filter(Boolean).join(" · ");
  const who=r.cooks && r.cooks.length ? " · FROM "+r.cooks.join(" & ").toUpperCase() : "";
  $("#modal-content").innerHTML='<article class="detail"><p class="eyebrow">RECIPE '+String(r.number).padStart(3,"0")+' · '+html(label(r).toUpperCase())+html(who)+'</p>'+
   '<h2 id="modal-title">'+html(r.title)+'</h2><p>'+html(r.summary)+'</p><div class="detail-info">'+info+'</div>'+
-  (lead?'<figure class="detail-photo"><img src="'+html(lead.thumb)+'" srcset="'+html(lead.thumb)+' 640w, '+html(lead.src)+' 1600w" sizes="(max-width: 700px) 100vw, 700px" alt="'+html(lead.caption||r.title)+'" referrerpolicy="no-referrer">'+(lead.caption?'<figcaption>'+html(lead.caption)+'</figcaption>':"")+'</figure>':"")+content+
+  (lead?'<figure class="detail-photo"><img src="'+html(lead.thumb)+'"'+srcset(lead)+' alt="'+html(lead.caption||r.title)+'">'+(lead.caption?'<figcaption>'+html(lead.caption)+'</figcaption>':"")+'</figure>':"")+content+
   (credits?'<p class="detail-credits">'+credits+'</p>':"")+
   '<div class="detail-actions"><button id="modal-save" data-save="'+html(r.slug)+'" class="button primary" type="button">'+(saved.has(r.slug)?"♥ Saved":"♡ Save recipe")+
   '</button><button class="button outlined" id="detail-print" type="button">Print recipe ⎙</button></div></article>';
