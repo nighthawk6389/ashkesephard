@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Import every public post from the AshkeSephard Blogger site into site/data/recipes.json.
 
+RETIRED: this built the site's original 188 recipes. The site is now the home for recipes (new ones
+arrive through the email bot in bot/), so this script refuses to run once email recipes exist.
+
 The Blogger posts are free-form, so this script converts each post into a structured
 recipe (ingredients, directions, notes, tools and photos) without inventing anything:
 every line of the original post lands in some section, and each recipe links back to
@@ -706,6 +709,11 @@ def main():
     entries = load_feed_dir(args.feed_dir) if args.feed_dir else fetch_feed()
     if not entries:
         raise RuntimeError("No posts found; leaving the existing catalog untouched")
+    # The site has been the home for recipes since the email bot started; the blog is an archive.
+    # Re-importing would rebuild recipes.json from the blog alone and drop recipes added by email.
+    if OUT.exists() and any(r.get("source") == "email" for r in json.loads(OUT.read_text()).get("recipes", [])):
+        raise RuntimeError("site/data/recipes.json contains recipes added by email; re-importing the blog "
+                           "would delete them. The blog import is retired.")
     # Guard against a truncated feed wiping out recipes and photos: Blogger occasionally returns
     # fewer posts than it has, and deleting more than a handful at once is almost never intended.
     if OUT.exists() and not args.allow_shrink:

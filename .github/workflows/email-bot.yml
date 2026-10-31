@@ -1,0 +1,47 @@
+name: Recipe Email Bot
+# Reads the family recipe inbox, updates the site's data, publishes (Vercel redeploys on push) and replies.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      self_test:
+        description: "Only check the mailbox, sending and Claude settings (changes nothing)"
+        type: boolean
+        default: false
+permissions:
+  contents: write
+concurrency:
+  group: email-bot
+  cancel-in-progress: false
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: bot/requirements.txt
+      - name: Install bot dependencies
+        run: python -m pip install -r bot/requirements.txt
+      - name: Run the recipe bot
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BOT_EMAIL_ADDRESS: ${{ secrets.BOT_EMAIL_ADDRESS }}
+          BOT_EMAIL_APP_PASSWORD: ${{ secrets.BOT_EMAIL_APP_PASSWORD }}
+          FAMILY_SENDERS: ${{ secrets.FAMILY_SENDERS }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          git config user.name "AshkeSephard recipe bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "${{ inputs.self_test }}" = "true" ]; then
+            python -m bot.run --check
+          else
+            python -m bot.run
+          fi

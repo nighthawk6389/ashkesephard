@@ -8,14 +8,14 @@
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./styles.css"><script defer src="./app.js"></script>
+<link rel="stylesheet" href="./styles.css"><script defer src="./config.js"></script><script defer src="./app.js"></script>
 </head>
 <body>
 <div class="announcement"><span class="announcement-dot"></span> Recipes from Ema, Savta &amp; the whole family<span class="announcement-extra"> <span aria-hidden="true">✳</span> Ashkenazi &amp; Sephardic</span></div>
 <header class="site-header">
   <a class="brand" href="./" aria-label="AshkeSephard home"><span class="brand-mark">✳</span><span>Ashke<em>Sephard</em></span></a>
-  <nav class="nav"><a href="#recipes">Recipes</a><a href="#cooks">Family cooks</a><a href="#about">Our kitchen</a></nav>
-  <a class="header-action" href="#recipes">Find a recipe ↗</a>
+  <nav class="nav"><a href="#recipes">Recipes</a><a href="#tried">Tried it</a><a href="#requests">Requests</a><a href="#cooks">Family cooks</a></nav>
+  <button class="header-action" type="button" data-wizard>＋ Add a recipe</button>
 </header>
 <main>
 <section class="hero wrap">
@@ -55,6 +55,7 @@
     <button class="chip" data-filter="shabbat" aria-pressed="false">Shabbat</button>
     <button class="chip" data-filter="holiday" aria-pressed="false">Chagim</button>
     <button class="chip" data-filter="gf" aria-pressed="false">Gluten free</button>
+    <button class="chip" data-filter="tried" aria-pressed="false">Tried &amp; reviewed</button>
    </div></div>
    <div class="extra-filters">
     <label>From <select id="cook" aria-label="Family cook"><option value="">Everyone</option></select></label>
@@ -67,8 +68,16 @@
   <div id="recipe-grid" class="recipe-grid"></div>
   <div id="empty" class="empty" hidden><div>🥣</div><h3>No recipes in this pot</h3><p>Try another keyword or remove a filter.</p><button id="clear" class="button primary">Clear filters</button></div>
   <div class="more-holder"><button type="button" id="more" class="button outlined" hidden>Show more recipes ↓</button></div>
-  <p class="archive-note">Every recipe comes from the family blog, word for word, with its original photos.</p>
+  <p class="archive-note">Recipes from the family blog and from family emails, word for word, with their original photos.</p>
  </div>
+</section>
+<section id="tried" class="tried wrap" hidden>
+ <div class="section-heading"><div><p class="eyebrow">TRIED &amp; TESTED</p><h2>Fresh from <i>the family's kitchens.</i></h2><p>What everyone's been cooking, how it came out, and what they changed.</p></div><button type="button" class="button outlined" data-filter-tried>All tried recipes ↗</button></div>
+ <div id="tried-list" class="tried-list"></div>
+</section>
+<section id="requests" class="requests wrap">
+ <div class="section-heading"><div><p class="eyebrow">THE WISH LIST</p><h2>Requested <i>recipes.</i></h2><p>Recipes someone is looking for. Have one? Send it in and it goes straight on the site.</p></div><button type="button" class="button primary" data-mail="request">Request a recipe ↗</button></div>
+ <div id="request-list" class="request-list"></div>
 </section>
 <section id="cooks" class="cooks wrap">
  <div class="section-heading"><div><p class="eyebrow">THE FAMILY COOKS</p><h2>Who's in <i>the kitchen.</i></h2><p>Pick a cook to see their recipes.</p></div></div>
@@ -81,6 +90,41 @@
 </main>
 <footer class="footer"><div class="wrap footer-content"><a class="brand" href="./"><span class="brand-mark">✳</span><span>Ashke<em>Sephard</em></span></a><span>A family tradition, one recipe at a time.</span><a href="https://ashkesephardfamilyrecipes.blogspot.com/" target="_blank" rel="noopener noreferrer">The original family blog ↗</a></div></footer>
 <div id="modal" class="modal" hidden><div class="modal-shade" data-close="true"></div><section class="modal-window" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><span>✳ &nbsp; ASHKESEPHARD</span><div><button id="print" type="button" title="Print recipe" aria-label="Print recipe">⎙</button><button id="copy" type="button" title="Copy recipe link" aria-label="Copy recipe link">↗</button><button type="button" data-close="true" aria-label="Close recipe">×</button></div></div><div id="modal-content"></div></section></div>
+<div id="wizard" class="modal" hidden><div class="modal-shade" data-wizard-close="true"></div><section class="modal-window wizard-window" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
+ <div class="modal-header"><span>✳ &nbsp; ADD A RECIPE</span><div><button type="button" data-wizard-close="true" aria-label="Close">×</button></div></div>
+ <form id="wizard-form" class="wizard" novalidate>
+  <p class="eyebrow" id="wizard-step-label">STEP 1 OF 4</p>
+  <div class="wizard-progress" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+  <fieldset class="wizard-step" data-step="1">
+   <h2 id="wizard-title">The <i>basics.</i></h2>
+   <div class="wizard-tip"><strong>Have it on paper?</strong> Skip the typing: email a photo of the recipe card and the recipe bot will write it up for you. <button type="button" class="link-button" data-mail="photo">Email a photo instead ↗</button></div>
+   <label class="field"><span>Recipe name</span><input name="title" required placeholder="Savta's chocolate mandelbroit" autocomplete="off"></label>
+   <label class="field"><span>Whose recipe is it?</span><input name="whose" list="cook-names" placeholder="Ema, Savta, you…" autocomplete="off"><datalist id="cook-names"></datalist></label>
+   <div class="field-row">
+    <label class="field"><span>Kind of dish</span><select name="course"><option value="">Choose…</option><option>Main</option><option>Side</option><option>Salad</option><option>Soup</option><option>Dessert</option><option>Breakfast</option><option>Starter</option><option>Snack</option><option>Sauce &amp; dressing</option></select></label>
+    <label class="field"><span>Kitchen</span><select name="kitchen"><option value="">Choose…</option><option>Meat</option><option>Dairy</option><option>Pareve</option><option>Fish (pareve)</option></select></label>
+   </div>
+   <div class="field-checks"><label><input type="checkbox" name="tags" value="Shabbat"> Shabbat</label><label><input type="checkbox" name="tags" value="Chagim"> Chagim</label><label><input type="checkbox" name="tags" value="Pesach"> Pesach</label><label><input type="checkbox" name="tags" value="Gluten free"> Gluten free</label></div>
+  </fieldset>
+  <fieldset class="wizard-step" data-step="2" hidden>
+   <h2>What goes <i>in it.</i></h2>
+   <label class="field"><span>Ingredients, one per line</span><textarea name="ingredients" rows="11" placeholder="2 cups flour&#10;1 cup sugar&#10;3 eggs&#10;&#10;Topping:&#10;1/2 cup chocolate chips"></textarea></label>
+   <p class="field-hint">End a line with a colon (like <em>Topping:</em>) to start a new part of the recipe.</p>
+  </fieldset>
+  <fieldset class="wizard-step" data-step="3" hidden>
+   <h2>How it's <i>made.</i></h2>
+   <label class="field"><span>Steps, one per line</span><textarea name="steps" rows="8" placeholder="Preheat the oven to 350°F.&#10;Mix everything together.&#10;Bake 30 minutes."></textarea></label>
+   <label class="field"><span>Notes or the story behind it (optional)</span><textarea name="notes" rows="4" placeholder="Savta always doubled the cinnamon…"></textarea></label>
+  </fieldset>
+  <fieldset class="wizard-step" data-step="4" hidden>
+   <h2>Check it and <i>send.</i></h2>
+   <div id="wizard-preview" class="wizard-preview"></div>
+   <div class="wizard-tip"><strong>Don't forget photos.</strong> When your email app opens, attach a picture of the dish, and the handwritten card if there is one. The recipe bot puts the recipe on the site and replies with the link, usually within half an hour.</div>
+   <p class="field-hint" id="wizard-send-note"></p>
+  </fieldset>
+  <div class="wizard-actions"><button type="button" class="button outlined" id="wizard-back">← Back</button><button type="button" class="button primary" id="wizard-next">Next →</button><button type="button" class="button primary" id="wizard-send" hidden>Open email ↗</button><button type="button" class="button outlined" id="wizard-copy" hidden>Copy recipe</button></div>
+ </form>
+</section></div>
 <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
 </body>
 </html>
