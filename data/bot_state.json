@@ -5,6 +5,10 @@
    "at": "2026-10-31T03:28Z",
    "outcome": "new_recipe",
    "recipe": "ilan-s-yellow-rice"
+  },
+  "60107ed9c70086d6ac68": {
+   "at": "2026-10-31T03:58Z",
+   "outcome": "request"
   }
  },
  "threads": {

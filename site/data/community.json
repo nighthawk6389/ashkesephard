@@ -1,4 +1,14 @@
 {
  "comments": [],
- "requests": []
+ "requests": [
+  {
+   "id": "q-60107ed9",
+   "title": "Abba's potato fries",
+   "details": "The ones he makes when we BBQ: long thin slices fried in a pan of oil. Super crunchy.",
+   "name": "Ilan",
+   "date": "2026-10-30",
+   "status": "open",
+   "recipe": null
+  }
+ ]
 }
