@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 
 PROCESSED_FOLDER = "Processed-by-bot"
 IGNORED_FOLDER = "Ignored-by-bot"
+FAMILY_DRAFT_SUBJECT = "Family list"
 MAX_IMAGES = 12
 MAX_DOCUMENTS = 2
 MIN_IMAGE_BYTES = 6_000  # smaller images are signature logos and tracking pixels
@@ -163,6 +164,39 @@ class Mailbox:
         if status != "OK":
             raise RuntimeError(f"IMAP {what} failed: {data}")
         return data
+
+    def _drafts_folder(self):
+        """Gmail names the drafts folder per language ("[Gmail]/Drafts", "[Gmail]/Brouillons"…) but flags it \\Drafts."""
+        names = []
+        for line in self._check(self.imap.list(), "list folders"):
+            m = re.match(rb'\((?P<flags>[^)]*)\) (?:"[^"]*"|NIL) (?P<name>.+)$', line or b"")
+            if not m:
+                continue
+            name = m.group("name").decode(errors="replace").strip().strip('"')
+            if rb"\Drafts" in m.group("flags"):
+                return name
+            names.append(name)
+        return next((n for n in ("[Gmail]/Drafts", "Drafts", "INBOX.Drafts") if n in names), None)
+
+    def family_draft(self):
+        """Text of the newest draft titled "Family list", or None if there isn't one."""
+        folder = self._drafts_folder()
+        if not folder:
+            return None
+        try:
+            self._check(self.imap.select(f'"{folder}"', readonly=True), f"select {folder}")
+            data = self._check(self.imap.uid("SEARCH", None, "SUBJECT", f'"{FAMILY_DRAFT_SUBJECT}"'), "search drafts")
+            for uid in reversed(data[0].split() if data and data[0] else []):
+                parts = self._check(self.imap.uid("FETCH", uid, "(BODY.PEEK[])"), "fetch draft")
+                raw = next((p[1] for p in parts if isinstance(p, tuple)), None)
+                if not raw:
+                    continue
+                draft = parse_message(uid.decode(), raw)
+                if draft.subject.strip().casefold() == FAMILY_DRAFT_SUBJECT.casefold():
+                    return draft.text + ("\n" + draft.quoted if draft.quoted else "")
+            return None
+        finally:
+            self._check(self.imap.select("INBOX"), "select INBOX")
 
     def count(self):
         data = self._check(self.imap.uid("SEARCH", None, "ALL"), "search")

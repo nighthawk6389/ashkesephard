@@ -90,7 +90,7 @@ def site(tmp_path_factory):
 
 SETTINGS = Settings(bot_address=BOT, app_password=PASSWORD, imap_host="127.0.0.1", imap_port=3993,
                     smtp_host="127.0.0.1", smtp_port=3465, site_url="https://recipes.example",
-                    admin_email=DANA, family={ORLEE: "Orlee", DANA: "Dana"})
+                    admin_email=DANA, family={ORLEE: "Orlee"})  # Dana comes from the "Family list" draft
 INSECURE = ssl._create_unverified_context()  # GreenMail's self-signed certificate
 
 
@@ -131,6 +131,18 @@ def send(sender, subject, text=None, html=None, attachments=(), message_id=None,
     return msg["Message-ID"]
 
 
+def save_draft(subject, text):
+    """Put a draft in the bot's Drafts folder, the way Gmail stores one."""
+    imap = imaplib.IMAP4_SSL("127.0.0.1", 3993, ssl_context=INSECURE)
+    imap.login(BOT, PASSWORD)
+    imap.create("Drafts")
+    msg = EmailMessage()
+    msg["From"], msg["Subject"] = BOT, subject
+    msg.set_content(text)
+    imap.append("Drafts", r"(\Draft)", None, msg.as_bytes())
+    imap.logout()
+
+
 def mailbox(user, folder="INBOX"):
     imap = imaplib.IMAP4_SSL("127.0.0.1", 3993, ssl_context=INSECURE)
     imap.login(user, PASSWORD)
@@ -167,6 +179,21 @@ def validate(instance, schema):
 
 
 # ---------------------------------------------------------------- the test
+
+def test_empty_family_list_touches_nothing(greenmail, site):
+    """With no draft and no FAMILY_SENDERS the bot must stop, not file family emails away as strangers'."""
+    from dataclasses import replace
+    send(ORLEE, "Early email", "Hello")
+    with pytest.raises(RuntimeError, match="Nobody is on the family list"):
+        bot_run.run(replace(SETTINGS, family={}), ScriptedReader({}), ssl_context=INSECURE, push=False)
+    assert [m["Subject"] for m in mailbox(BOT)] == ["Early email"]
+    imap = imaplib.IMAP4_SSL("127.0.0.1", 3993, ssl_context=INSECURE)
+    imap.login(BOT, PASSWORD)
+    imap.select("INBOX")
+    imap.store(b"1:*", "+FLAGS", r"(\Deleted)")
+    imap.expunge()
+    imap.logout()
+
 
 def test_family_emails_end_to_end(greenmail, site):
     request_mid = "<request-1@family.test>"
@@ -212,6 +239,7 @@ def test_family_emails_end_to_end(greenmail, site):
     logo_bytes = io.BytesIO()
     logo.save(logo_bytes, "PNG")
 
+    save_draft("Family list", "Family list\n\nDana <DANA@family.test>\nSomeone who never writes - quiet@family.test\n")
     send(DANA, "Request: Savta's chocolate mandelbroit", "Does anyone have it?", message_id=request_mid)
     send(ORLEE, "New recipe: Orlee's Lemon Chicken", "Here's my card and how it came out.\n\nSent from my iPhone",
          attachments=[("card.jpg", "image/jpeg", jpeg((240, 230, 200))), ("dish.heic", "image/heic", heic((200, 120, 40))),
@@ -232,7 +260,8 @@ def test_family_emails_end_to_end(greenmail, site):
     community = json.loads(store.COMMUNITY.read_text())
     added = data["recipes"][-1]
     assert added["title"] == "Orlee's Lemon Chicken" and added["slug"] == "orlee-s-lemon-chicken"
-    assert added["number"] == 189 and data["total"] == 189 and added["added_by"] == "Orlee"
+    before = len(json.loads((REPO / "site" / "data" / "recipes.json").read_text())["recipes"])
+    assert added["number"] == before + 1 and data["total"] == before + 1 and added["added_by"] == "Orlee"
     assert added["complete"] and not added["in_progress"] and added["shabbat"]
     ing = next(s for s in added["sections"] if s["kind"] == "ingredients")["items"]
     assert ing[0] == {"text": "Chicken", "sub": True} and ing[3] == {"text": "Sauce", "sub": True}

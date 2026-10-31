@@ -10,10 +10,10 @@ email content, only counts and outcomes.
 import argparse
 import subprocess
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from .ai import ClaudeReader, ModelError
-from .config import ROOT, Settings
+from .config import ROOT, Settings, parse_family_note
 from .mail import IGNORED_FOLDER, PROCESSED_FOLDER, Mailbox, build_reply, parse_message, send_all
 from .store import SiteData, save_photo
 
@@ -157,10 +157,24 @@ def commit_and_push(message, push=True):
     raise RuntimeError("Could not push the bot's changes; nothing was replied to, the emails will be retried")
 
 
+def load_family(settings, box):
+    """Who counts as family: the "Family list" Gmail draft plus the FAMILY_SENDERS secret (the draft wins on names)."""
+    from_draft = parse_family_note(box.family_draft() or "")
+    family = {**settings.family, **from_draft}
+    print(f"Family list: {len(family)} address(es) "
+          f"({len(from_draft)} from the 'Family list' draft, {len(settings.family)} from FAMILY_SENDERS)")
+    return family
+
+
 def run(settings, reader, ssl_context=None, push=True, send=True):
     report = RunReport()
     data = SiteData()
     with Mailbox(settings, ssl_context) as box:
+        settings = replace(settings, family=load_family(settings, box))
+        if not settings.family:
+            # Without anyone on the list every email would be filed away as a stranger's; stop instead.
+            raise RuntimeError("Nobody is on the family list. Add a Gmail draft titled 'Family list' "
+                               "(one 'Name <email>' per line) or the FAMILY_SENDERS secret. No emails were touched.")
         pending = []
         for number, (uid, raw) in enumerate(box.fetch(settings.max_per_run), 1):
             incoming = parse_message(uid, raw)
@@ -199,10 +213,12 @@ def check(settings, ssl_context=None):
     if missing:
         print("Add the missing secrets/variables (see README: Setting up the recipe bot), then run the self test again.")
         return False
-    print(f"Family list: {len(settings.family)} address(es)")
     try:
         with Mailbox(settings, ssl_context) as box:
             print(f"Mailbox: logged in, {box.count()} email(s) waiting in the inbox")
+            if not load_family(settings, box):
+                ok = False
+                print("Family list: EMPTY. Add a Gmail draft titled 'Family list' (one 'Name <email>' per line).")
     except Exception as exc:
         ok = False
         print(f"Mailbox: FAILED ({type(exc).__name__}: {exc})")

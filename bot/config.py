@@ -25,6 +25,27 @@ def parse_family(raw):
     return family
 
 
+EMAIL_RE = re.compile(r"[\w.+'-]+@[\w-]+(?:\.[\w-]+)+")
+
+
+def parse_family_note(text):
+    """The "Family list" Gmail draft: one person per line, as forgiving as a handwritten note.
+
+    "Orlee <orlee@example.com>", "Orlee - orlee@example.com" and a bare "orlee@example.com" all work;
+    lines without an email address (headings, blank lines) are skipped.
+    """
+    family = {}
+    for line in (text or "").splitlines():
+        m = EMAIL_RE.search(line)
+        if not m:
+            continue
+        address = m.group(0).lower()
+        name = (line[:m.start()] + " " + line[m.end():]).replace("mailto:", " ").replace("<", " ").replace(">", " ")
+        name = re.sub(r"\s+", " ", name).strip(" -–:,;|•*()[]\t")
+        family[address] = name or address.split("@")[0].replace(".", " ").title()
+    return family
+
+
 @dataclass
 class Settings:
     bot_address: str = ""
@@ -59,8 +80,10 @@ class Settings:
         )
 
     def missing(self):
+        # The family list itself can live in a Gmail draft, so FAMILY_SENDERS is optional here;
+        # run() refuses to work if neither source lists anyone.
         needed = {"BOT_EMAIL_ADDRESS": self.bot_address, "BOT_EMAIL_APP_PASSWORD": self.app_password,
-                  "SITE_URL": self.site_url, "FAMILY_SENDERS": self.family,
+                  "SITE_URL": self.site_url,
                   "ANTHROPIC_API_KEY or AI_GATEWAY_API_KEY": self.gateway_key or os.environ.get("ANTHROPIC_API_KEY")}
         return [name for name, value in needed.items() if not value]
 

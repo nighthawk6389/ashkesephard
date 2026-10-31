@@ -43,21 +43,22 @@ Every 15 minutes a GitHub Action (`.github/workflows/email-bot.yml`) checks the 
      - `BOT_EMAIL_APP_PASSWORD`: the app password from step 1
      - `ANTHROPIC_API_KEY`: the key from step 2, **or**
      - `AI_GATEWAY_API_KEY`: a Vercel AI Gateway key. When this one is set the bot uses Vercel and ignores `ANTHROPIC_API_KEY`; delete it to go back to Anthropic directly. (Through Vercel the bot doesn't get Anthropic's automatic fallback when Claude declines a request; such an email is retried and then handed to the admin.)
-     - `FAMILY_SENDERS`: one person per line, the name shown on the site then their address, e.g.
-       ```
-       Orlee <orlee@example.com>
-       Dana <dana@example.com>
-       ```
-       Add every address someone might send from.
+     - `FAMILY_SENDERS` (optional backup): the same format as the Family list draft below.
      - `ADMIN_EMAIL` (optional): gets a copy of every new recipe and of anything the bot gives up on.
    - Variables tab: `SITE_URL` = the Vercel address, e.g. `https://ashkesephard.vercel.app`.
-4. **The site's buttons** send to the address in `site/config.js` (`recipesEmail`), currently `ashkesephard.recipes@gmail.com`. Change it there if the bot ever gets a new inbox.
-5. **Test it**: Actions → Recipe Email Bot → Run workflow, tick **self test**. It logs in to Gmail, checks sending, and has Claude read a sample recipe (the line says whether it went through Vercel AI Gateway or the Anthropic API), without changing anything. Then send a real email from a family address and wait for the reply.
+4. **Write the family list.** In the bot's Gmail, start a new email with the subject **Family list** and leave it as a draft (don't send it). Put one person per line, the name shown on the site, then their address:
+   ```
+   Orlee <orlee@example.com>
+   Dana <dana@example.com>
+   ```
+   Add every address someone might send from. `Orlee - orlee@example.com` or a bare address works too, and lines without an address are ignored. The bot rereads the draft on every run, so edit it any time from the Gmail app. People in the `FAMILY_SENDERS` secret are allowed too, and if someone is in both, the draft's name wins. If both are empty, the bot stops without touching any email.
+5. **The site's buttons** send to the address in `site/config.js` (`recipesEmail`), currently `ashkesephard.recipes@gmail.com`. Change it there if the bot ever gets a new inbox.
+6. **Test it**: Actions → Recipe Email Bot → Run workflow, tick **self test**. It logs in to Gmail, counts the family list, checks sending, and has Claude read a sample recipe (the line says whether it went through Vercel AI Gateway or the Anthropic API), without changing anything. Then send a real email from a family address and wait for the reply.
 
-To add someone later, edit the `FAMILY_SENDERS` secret.
+To add someone later, edit the **Family list** draft in the bot's Gmail.
 
 Notes:
-- Comments, photos and requests are public on the site, like the recipes. Family email addresses are kept only in the GitHub secret. The bot's log never prints addresses or email content, because Actions logs on a public repository are public.
+- Comments, photos and requests are public on the site, like the recipes. Family email addresses are kept only in the bot's Gmail draft and the GitHub secret. The bot's log never prints addresses or email content, because Actions logs on a public repository are public.
 - GitHub pauses scheduled workflows after 60 days without any repository activity and emails the repo owner; click "Enable workflow" in the Actions tab to resume.
 - If `main` ever gets branch protection, allow GitHub Actions to push to it, or the bot can't publish.
 

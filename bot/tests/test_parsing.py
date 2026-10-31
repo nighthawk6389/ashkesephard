@@ -47,3 +47,31 @@ def test_blog_recipe_round_trips_through_model_format():
         sections = SiteData.to_sections(model)
         flat = lambda secs: [(i["text"], bool(i.get("sub"))) for s in secs for i in s["items"]]
         assert sorted(flat(sections)) == sorted(flat(recipe["sections"])), recipe["slug"]
+
+
+def test_family_note_is_forgiving():
+    from bot.config import parse_family_note
+    note = "Family list\n\nIlan <Ilan.E@gmail.com>\nBat-Sheva - batsheva@yahoo.com\nDoda Pnena: pnena@walla.co.il\nsavta.ruth@gmail.com\n• Orlee (orlee@example.com)\nOur cousins:\n"
+    assert parse_family_note(note) == {
+        "ilan.e@gmail.com": "Ilan", "batsheva@yahoo.com": "Bat-Sheva", "pnena@walla.co.il": "Doda Pnena",
+        "savta.ruth@gmail.com": "Savta Ruth", "orlee@example.com": "Orlee"}
+
+
+def test_finds_gmail_drafts_folder_in_any_language():
+    from bot.mail import Mailbox
+
+    class FakeImap:
+        def __init__(self, lines):
+            self.lines = lines
+
+        def list(self):
+            return "OK", self.lines
+
+    box = Mailbox.__new__(Mailbox)
+    box.imap = FakeImap([b'(\\HasNoChildren) "/" "INBOX"', b'(\\HasChildren \\Noselect) "/" "[Gmail]"',
+                         b'(\\All \\HasNoChildren) "/" "[Gmail]/All Mail"',
+                         b'(\\Drafts \\HasNoChildren) "/" "[Gmail]/&BeIF2QXUBdMF6AXq-"',  # Hebrew-language Gmail
+                         b'(\\HasNoChildren \\Sent) "/" "[Gmail]/Sent Mail"'])
+    assert box._drafts_folder() == "[Gmail]/&BeIF2QXUBdMF6AXq-"
+    box.imap = FakeImap([b'(\\HasNoChildren) "." "INBOX"', b'(\\HasNoChildren) "." "Drafts"'])
+    assert box._drafts_folder() == "Drafts"
