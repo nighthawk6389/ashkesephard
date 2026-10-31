@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -32,6 +32,7 @@ jobs:
       - name: Run the recipe bot
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
           BOT_EMAIL_ADDRESS: ${{ secrets.BOT_EMAIL_ADDRESS }}
           BOT_EMAIL_APP_PASSWORD: ${{ secrets.BOT_EMAIL_APP_PASSWORD }}
           FAMILY_SENDERS: ${{ secrets.FAMILY_SENDERS }}

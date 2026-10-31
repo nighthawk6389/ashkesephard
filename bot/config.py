@@ -36,6 +36,7 @@ class Settings:
     site_url: str = ""
     admin_email: str = ""
     model: str = "claude-opus-5-5"
+    gateway_key: str = ""  # Vercel AI Gateway; used instead of ANTHROPIC_API_KEY when set
     family: dict = field(default_factory=dict)
     max_per_run: int = 15
 
@@ -52,6 +53,7 @@ class Settings:
             site_url=(env.get("SITE_URL") or "").rstrip("/"),
             admin_email=env.get("ADMIN_EMAIL", "").strip().lower(),
             model=env.get("BOT_MODEL") or "claude-opus-5-5",
+            gateway_key=env.get("AI_GATEWAY_API_KEY", "").strip(),
             family=parse_family(env.get("FAMILY_SENDERS")),
             max_per_run=int(env.get("BOT_MAX_PER_RUN") or 15),
         )
@@ -59,7 +61,7 @@ class Settings:
     def missing(self):
         needed = {"BOT_EMAIL_ADDRESS": self.bot_address, "BOT_EMAIL_APP_PASSWORD": self.app_password,
                   "SITE_URL": self.site_url, "FAMILY_SENDERS": self.family,
-                  "ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY")}
+                  "ANTHROPIC_API_KEY or AI_GATEWAY_API_KEY": self.gateway_key or os.environ.get("ANTHROPIC_API_KEY")}
         return [name for name, value in needed.items() if not value]
 
     def recipe_url(self, slug):

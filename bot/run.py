@@ -222,14 +222,16 @@ def check(settings, ssl_context=None):
     sample = IncomingEmail(uid="0", message_id="<self-test@local>", sender="test@example.com", sender_display="Test",
                            subject="New recipe: Self-test toast", date=datetime.now(timezone.utc),
                            text="Self-test toast. 2 slices bread, butter. Toast the bread, then butter it.", quoted="")
+    reader = ClaudeReader(settings.model, settings.gateway_key)
+    label = f"Claude ({reader.model} via {reader.route})"
     try:
-        result = ClaudeReader(settings.model).classify(sample, "Test", None, [], [])
+        result = reader.classify(sample, "Test", None, [], [])
         good = result["intent"] == "new_recipe" and result["recipe"]["ingredients"]
-        print(f"Claude ({settings.model}): {'read the sample recipe correctly' if good else 'answered, but misread the sample: ' + result['intent']}")
+        print(f"{label}: {'read the sample recipe correctly' if good else 'answered, but misread the sample: ' + result['intent']}")
         ok &= bool(good)
     except (ModelError, anthropic.APIError) as exc:
         ok = False
-        print(f"Claude ({settings.model}): FAILED ({type(exc).__name__}: {exc})")
+        print(f"{label}: FAILED ({type(exc).__name__}: {exc})")
     return ok
 
 
@@ -244,7 +246,7 @@ def main():
     if missing:
         print("The recipe bot is not set up yet; missing secrets: " + ", ".join(missing))
         sys.exit(0)  # not an error until the family sets it up; the scheduled run stays green
-    run(settings, ClaudeReader(settings.model))
+    run(settings, ClaudeReader(settings.model, settings.gateway_key))
 
 
 if __name__ == "__main__":

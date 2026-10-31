@@ -34,12 +34,13 @@ Every 15 minutes a GitHub Action (`.github/workflows/email-bot.yml`) checks the 
 ### Setting up the recipe bot (once)
 
 1. **Create the inbox.** Make a new Gmail account for the bot (for example `ashkesephard.recipes@gmail.com`). In that account turn on 2-Step Verification, then create an **App password** (Google Account → Security → App passwords). The bot logs in with this, not the real password.
-2. **Get a Claude API key** at https://console.anthropic.com (add a little credit; each email costs roughly 5–15 cents).
+2. **Get a Claude API key** at https://console.anthropic.com (add a little credit; each email costs roughly 5–15 cents). Or use **Vercel AI Gateway** instead: create an AI Gateway API key in the Vercel dashboard (AI Gateway → API Keys) and the bot sends its Claude requests through Vercel, billed to your Vercel account.
 3. **Add the secrets** in GitHub: repo → Settings → Secrets and variables → Actions.
    - Secrets:
      - `BOT_EMAIL_ADDRESS`: the bot's Gmail address
      - `BOT_EMAIL_APP_PASSWORD`: the app password from step 1
-     - `ANTHROPIC_API_KEY`: the key from step 2
+     - `ANTHROPIC_API_KEY`: the key from step 2, **or**
+     - `AI_GATEWAY_API_KEY`: a Vercel AI Gateway key. When this one is set the bot uses Vercel and ignores `ANTHROPIC_API_KEY`; delete it to go back to Anthropic directly. (Through Vercel the bot doesn't get Anthropic's automatic fallback when Claude declines a request; such an email is retried and then handed to the admin.)
      - `FAMILY_SENDERS`: one person per line, the name shown on the site then their address, e.g.
        ```
        Orlee <orlee@example.com>
@@ -49,7 +50,7 @@ Every 15 minutes a GitHub Action (`.github/workflows/email-bot.yml`) checks the 
      - `ADMIN_EMAIL` (optional): gets a copy of every new recipe and of anything the bot gives up on.
    - Variables tab: `SITE_URL` = the Vercel address, e.g. `https://ashkesephard.vercel.app`.
 4. **The site's buttons** send to the address in `site/config.js` (`recipesEmail`), currently `ashkesephard.recipes@gmail.com`. Change it there if the bot ever gets a new inbox.
-5. **Test it**: Actions → Recipe Email Bot → Run workflow, tick **self test**. It logs in to Gmail, checks sending, and has Claude read a sample recipe, without changing anything. Then send a real email from a family address and wait for the reply.
+5. **Test it**: Actions → Recipe Email Bot → Run workflow, tick **self test**. It logs in to Gmail, checks sending, and has Claude read a sample recipe (the line says whether it went through Vercel AI Gateway or the Anthropic API), without changing anything. Then send a real email from a family address and wait for the reply.
 
 To add someone later, edit the `FAMILY_SENDERS` secret.
 

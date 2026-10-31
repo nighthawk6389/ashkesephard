@@ -2,6 +2,7 @@
 import base64
 import io
 import json
+import re
 
 import anthropic
 from PIL import Image, ImageOps
@@ -12,6 +13,7 @@ try:  # iPhone photos often arrive as HEIC
 except ImportError:  # pragma: no cover - optional locally, installed in the workflow
     pass
 
+GATEWAY_URL = "https://ai-gateway.vercel.sh"
 COURSES = ["mains", "sides", "salads", "soups", "desserts", "breakfast", "starters", "snacks", "sauces", "guides"]
 MAX_IMAGE_EDGE = 1568
 
@@ -165,21 +167,42 @@ def attachment_blocks(incoming):
 
 # ---------------------------------------------------------------- calling Claude
 
+def gateway_model(model):
+    """Vercel AI Gateway names models "anthropic/claude-opus-5.5" where Anthropic says "claude-opus-5-5"."""
+    if "/" in model:
+        return model
+    return "anthropic/" + re.sub(r"^(claude-[a-z]+)-(\d+)-(\d+)$", r"\1-\2.\3", model)
+
+
 class ClaudeReader:
-    def __init__(self, model):
-        self.model = model
-        self.client = anthropic.Anthropic(max_retries=4, timeout=300.0)
+    """Calls Claude through Vercel AI Gateway when its key is set, otherwise directly through the Anthropic API."""
+
+    def __init__(self, model, gateway_key=None):
+        self.gateway = bool(gateway_key)
+        if self.gateway:
+            self.client = anthropic.Anthropic(api_key=gateway_key, base_url=GATEWAY_URL, max_retries=4, timeout=300.0)
+            self.model = gateway_model(model)
+            self.route = "Vercel AI Gateway"
+        else:
+            self.client = anthropic.Anthropic(max_retries=4, timeout=300.0)
+            self.model = model
+            self.route = "Anthropic API"
+
+    def _create(self, **request):
+        if self.gateway:
+            # The gateway speaks the standard Messages API; Anthropic's server-side refusal fallback
+            # is an Anthropic-only beta, so it is left out here.
+            return self.client.messages.create(**request)
+        return self.client.beta.messages.create(**request, betas=["server-side-fallback-2026-07-01"], fallbacks="default")
 
     def _ask(self, system, content, schema):
         try:
-            response = self.client.beta.messages.create(
+            response = self._create(
                 model=self.model,
                 max_tokens=16000,
                 system=system,
                 messages=[{"role": "user", "content": content}],
                 output_config={"effort": "high", "format": {"type": "json_schema", "schema": schema}},
-                betas=["server-side-fallback-2026-07-01"],
-                fallbacks="default",
             )
         except (anthropic.BadRequestError, anthropic.AuthenticationError, anthropic.PermissionDeniedError,
                 anthropic.NotFoundError) as exc:
