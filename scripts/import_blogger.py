@@ -239,6 +239,8 @@ def strip_bullet(text):
 
 def is_subhead(text):
     t = text.strip()
+    if len(t) <= 40 and re.match(r"^(?:original|updated|new|old|second|first)\s+(?:recipe|version)\b", t, re.I):
+        return True  # e.g. "Original recipe given", "Updated recipe given in 2020"
     return 2 < len(t) <= 48 and t.endswith(":") and not QTY_RE.match(t) and "http" not in t
 
 
@@ -254,10 +256,10 @@ def looks_like_ingredient(text):
 
 
 def is_junk(text, title):
-    low = text.lower().strip(" .:-–")
+    low = text.lower().replace("’", "'").strip(" .:-–")
     if not low or low in EMAIL_JUNK or re.fullmatch(r"[.\-–•*_~=]+", text.strip()):
         return True
-    if low == clean_title(title)[0].lower().strip(" .:-–"):
+    if low == clean_title(title)[0].lower().replace("’", "'").strip(" .:-–"):
         return True
     return False
 
@@ -520,7 +522,7 @@ def ingredient_name(text):
         if nt == t:
             break
         t = nt
-    t = re.split(r"[,;(]| - | – |\bor\b|\bfor\b|\bto taste\b", t)[0].strip(" .:*")
+    t = re.split(r"[,;(]| - | – |\bor\b|\bfor\b|\bif\b|\bto taste\b", re.sub(r"\s+", " ", t))[0].strip(" .:*")
     if not t or len(t) > 28 or len(t.split()) > 4 or re.search(r"[?+/]|\band a half\b|\bdivided\b", t) or not re.search(r"[a-z]", t, re.I) or \
             t.lower().startswith(("optional", "salt", "pepper", "oil", "water", "cooking spray", "spray")):
         return None
@@ -698,10 +700,19 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--feed-dir", help="read saved Blogger feed JSON pages instead of fetching")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--allow-shrink", action="store_true",
+                    help="accept a feed with far fewer posts than the current catalog (e.g. after mass deletions)")
     args = ap.parse_args()
     entries = load_feed_dir(args.feed_dir) if args.feed_dir else fetch_feed()
     if not entries:
         raise RuntimeError("No posts found; leaving the existing catalog untouched")
+    # Guard against a truncated feed wiping out recipes and photos: Blogger occasionally returns
+    # fewer posts than it has, and deleting more than a handful at once is almost never intended.
+    if OUT.exists() and not args.allow_shrink:
+        previous = json.loads(OUT.read_text()).get("total", 0)
+        if len(entries) < previous - max(5, previous // 20):
+            raise RuntimeError(f"Feed has {len(entries)} posts but the catalog has {previous}; refusing to delete "
+                               "that many recipes. Re-run with --allow-shrink if the posts really were removed.")
     overrides = json.loads(OVERRIDES.read_text()) if OVERRIDES.exists() else {}
     overrides.pop("_comment", None)
     recipes = build(entries, overrides)

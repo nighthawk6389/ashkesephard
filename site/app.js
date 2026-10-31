@@ -12,13 +12,19 @@ const label = r => KASHRUT[group(r)];
 const from = r => r.cooks && r.cooks.length ? r.cooks.slice(0,2).join(" & ")+(r.cooks.length>2?" +":"") : "";
 const emoji = r => {
  const t = r.title.toLowerCase();
+ if (/"(?:chicken|shrimp)"/.test(t)) return "🥡";
+ if (/noodles|spaghetti|macaroni|gnocchi|pasta/.test(t) && !/kugel|pudding/.test(t)) return "🍝";
+ if (/dressing|sauce\)?$|mayonnaise|\brub\b|spice|charoset|marror|chutney|relish/.test(t)) return "🫙";
+ if (/eggplant|babaganoush/.test(t)) return "🍆";
  if (/soup|chamin|chulent|chollent|stew|chili|chowder/.test(t)) return "🍲";
+ if (/meatball|meatloaf|patties|burger|stuffed (?:cabbage|peppers)/.test(t)) return "🥘";
+ if (/chicken|schnitzel|hens|wings|duck/.test(t)) return "🍗";
  if (/salad|slaw|matbucha|tznon|bishbash/.test(t)) return "🥗";
- if (/cake|tiramisu|quiche|cheesecake/.test(t)) return "🍰";
+ if (/\bcake|tiramisu|quiche|cheesecake/.test(t)) return "🍰";
  if (/cookie|mandelbroit|bars|squares|hamatashen|doughnut|cream puff|balls|popcorn/.test(t)) return "🍪";
  if (/pie|muffin|pear/.test(t)) return "🥧";
  if (/kugel|pashtida|casserole|ziti|lasagna/.test(t)) return "🥘";
- if (/latke|pancake|blintz|french toast|toast|egg|shakshouka/.test(t)) return "🍳";
+ if (/latke|pancake|blintz|french toast|toast|\beggs?\b|shakshouka/.test(t)) return "🍳";
  if (/noodle|spaghetti|macaroni|mac and cheese|gnocchi|varnishkes|pasta/.test(t)) return "🍝";
  if (/bureka|dough/.test(t)) return "🥐";
  if (/rice|couscous|kasha/.test(t)) return "🍚";
@@ -48,7 +54,7 @@ function matches(r) {
  return !search || search.split(/\s+/).every(word=>searchIndex.get(r.slug).includes(word));
 }
 function status(r) {
- if (r.in_progress) return "◌ Still being written up";
+ if (r.in_progress) return "◌ Work in progress";
  if (r.shabbat) return "✳ Shabbat table";
  if (r.holiday) return "✳ For the chagim";
  if (r.complete) return "✺ Full recipe";
@@ -62,7 +68,7 @@ function card(r) {
   (photo?'<img class="card-photo" src="'+html(photo.thumb)+'" alt="" loading="lazy" decoding="async">':"")+
   '<button class="heart'+(isSaved?" saved":"")+'" type="button" data-save="'+html(r.slug)+'" aria-label="'+(isSaved?"Remove saved recipe":"Save recipe")+'">'+(isSaved?"♥":"♡")+'</button></div>'+
   '<div class="card-body"><div class="card-meta"><span class="type '+g+'">'+html(label(r))+'</span>'+(who?'<span class="time">From '+html(who)+'</span>':"")+'</div>'+
-  '<h3>'+html(r.title)+'</h3><p>'+html(r.summary)+'</p><div class="card-footer"><small>'+status(r)+'</small>'+
+  '<h3 title="'+html(r.title)+'">'+html(r.title)+'</h3><p>'+html(r.summary)+'</p><div class="card-footer"><small>'+status(r)+'</small>'+
   '<button type="button" data-open="'+html(r.slug)+'" class="open-recipe">View recipe <span>↗</span></button></div></div></article>';
 }
 function render() {
@@ -132,9 +138,12 @@ function detail(r) {
    album.map(p=>'<figure><a href="'+html(p.src)+'" target="_blank" rel="noopener noreferrer"><img src="'+html(p.thumb)+'"'+(photoRecipe?srcset(p):"")+' alt="'+html(p.caption||r.title)+'" loading="lazy"></a>'+(p.caption?'<figcaption>'+html(p.caption)+'</figcaption>':"")+'</figure>').join("")+'</div></div>';
  }
  const credits=[r.adapted_from?'Adapted from '+linkify(r.adapted_from):null, r.source_url?'<a href="'+html(r.source_url)+'" target="_blank" rel="noopener noreferrer">View the original blog post ↗</a>':null].filter(Boolean).join(" · ");
+ // Summaries are often the first line of the notes; don't print the same sentence twice.
+ const firstNote=[intro,notes].map(s=>s&&s.items.find(i=>!i.sub)).find(Boolean);
+ const repeatsNote=!!firstNote && firstNote.text.replace(/^(?:notes?|ema says|savta says)\s*[:\-–]\s*/i,"").startsWith(r.summary.replace(/[.…]$/,""));
  const who=r.cooks && r.cooks.length ? " · FROM "+r.cooks.join(" & ").toUpperCase() : "";
  $("#modal-content").innerHTML='<article class="detail"><p class="eyebrow">RECIPE '+String(r.number).padStart(3,"0")+' · '+html(label(r).toUpperCase())+html(who)+'</p>'+
-  '<h2 id="modal-title">'+html(r.title)+'</h2><p>'+html(r.summary)+'</p><div class="detail-info">'+info+'</div>'+
+  '<h2 id="modal-title">'+html(r.title)+'</h2>'+(repeatsNote?"":'<p>'+html(r.summary)+'</p>')+'<div class="detail-info">'+info+'</div>'+
   (lead?'<figure class="detail-photo"><img src="'+html(lead.thumb)+'"'+srcset(lead)+' alt="'+html(lead.caption||r.title)+'">'+(lead.caption?'<figcaption>'+html(lead.caption)+'</figcaption>':"")+'</figure>':"")+content+
   (credits?'<p class="detail-credits">'+credits+'</p>':"")+
   '<div class="detail-actions"><button id="modal-save" data-save="'+html(r.slug)+'" class="button primary" type="button">'+(saved.has(r.slug)?"♥ Saved":"♡ Save recipe")+

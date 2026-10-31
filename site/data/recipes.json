@@ -1,7 +1,7 @@
 {
  "schema_version": "2.0",
  "source": "https://ashkesephardfamilyrecipes.blogspot.com",
- "imported_at": "2026-10-31T01:49:31+00:00",
+ "imported_at": "2026-10-31T01:57:54+00:00",
  "total": 188,
  "cooks": [
   "Abba",
@@ -23151,7 +23151,8 @@
      "kind": "ingredients",
      "items": [
       {
-       "text": "Original recipe given"
+       "text": "Original recipe given",
+       "sub": true
       },
       {
        "text": "1 Spanish onion on bottom pieces"
@@ -23187,7 +23188,8 @@
        "text": "2 T Honey"
       },
       {
-       "text": "Updated recipe given in 2020"
+       "text": "Updated recipe given in 2020",
+       "sub": true
       },
       {
        "text": "4 marrow bones"
@@ -23243,7 +23245,7 @@
    "source_url": "https://ashkesephardfamilyrecipes.blogspot.com/2020/10/savtas-chulent.html",
    "published": "2020-10-18",
    "updated": "2021-04-01",
-   "summary": "With original recipe given, dried red navy beans, barley & marrow bones on bottom."
+   "summary": "With dried red navy beans, barley, marrow bones on bottom & chulent meat."
   },
   {
    "number": 165,
@@ -25166,11 +25168,8 @@
    ],
    "sections": [
     {
-     "kind": "intro",
+     "kind": "method",
      "items": [
-      {
-       "text": "Ema’s Meatballs"
-      },
       {
        "text": "Preheat oven to 375°F. I used 2 pounds of chop meat and mixed it with two eggs, about a half a cup of ketchup, about a half cup of matzo meal, two hamburger rolls that I wet and then washed in my hands until they were very very puréed. I added Five or six melted sautéed frozen onions. Then I put in a bunch of dried parsley flakes, very little bit of salt, a very small bit of garlic powder like less than a teaspoon. And about a tablespoon of paprika. Mix everything together. Mold into balls about the size of golf balls. Put them on a greased baking sheet or baking paper. Bake at 375°F for about 25 minutes. (If I make a lot, I freeze some on a baking sheet already shaped and ready to go. You can either keep it on that baking sheet so that it’s ready when you need it - or after it freezes, put it into a Ziploc bag and keep it as a quick ready to go dinner.)"
       }
