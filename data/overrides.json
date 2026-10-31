@@ -1,0 +1,24 @@
+{
+ "_comment": "Manual corrections applied by scripts/import_blogger.py, keyed by the Blogger post's URL slug (the part before .html). Supported keys: title, cooks, courses, kashrut, summary, in_progress, skip.",
+ "one-pan-chicken-w-cucumber-avocado": {
+  "title": "One-Pan Chicken with Cucumber Avocado Salad & Rice",
+  "courses": [
+   "mains"
+  ]
+ },
+ "strawberry-mango-mesclun-salad": {
+  "title": "Strawberry-Mango Mesclun Salad - needs editing"
+ },
+ "a-guide-to-choosing-fish-for-shabbbat": {
+  "title": "A Guide to Choosing Fish for Shabbat Dagim"
+ },
+ "co-workers-favorite-salad": {
+  "title": "Co-worker's Favorite Salad"
+ },
+ "fix": {
+  "title": "Fix - Sesame Zucchini Noodles",
+  "courses": [
+   "sides"
+  ]
+ }
+}

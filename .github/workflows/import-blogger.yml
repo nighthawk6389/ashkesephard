@@ -16,15 +16,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install Blogger importer dependencies
-        run: python -m pip install requests beautifulsoup4 bleach
-      - name: Import all published posts via Blogger feed
+      - name: Install importer dependencies
+        run: python -m pip install beautifulsoup4
+      - name: Import all published posts from the Blogger feed
         run: python scripts/import_blogger.py
-      - name: Commit updated recipe archive
+      - name: Commit updated recipes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/recipes.json
+          git add site/data/recipes.json
           if ! git diff --cached --quiet; then
             git commit -m "Sync family recipes from Blogger"
             git push
