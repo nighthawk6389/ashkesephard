@@ -1,5 +1,7 @@
 # AshkeSephard Family Recipes
 
+[![Recipe Email Bot](https://github.com/nighthawk6389/ashkesephard/actions/workflows/email-bot.yml/badge.svg)](https://github.com/nighthawk6389/ashkesephard/actions/workflows/email-bot.yml)
+
 The family cookbook from [ashkesephardfamilyrecipes.blogspot.com](https://ashkesephardfamilyrecipes.blogspot.com/), rebuilt as a fast, mobile-friendly website with the same look and feel as [The Family Table](https://github.com/nighthawk6389/family-dinners).
 
 All 188 blog posts are included, with their original photos (stored in this repo). Each recipe is split into notes, tools, ingredients (with checkboxes) and numbered steps, and links back to its original post. Nothing is invented: every line of each post is kept.
