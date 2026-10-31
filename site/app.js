@@ -77,7 +77,7 @@ function card(r) {
   (photo?'<img class="card-photo" src="'+html(photo.thumb)+'" alt="" loading="lazy" decoding="async">':"")+
   '<button class="heart'+(isSaved?" saved":"")+'" type="button" data-save="'+html(r.slug)+'" aria-label="'+(isSaved?"Remove saved recipe":"Save recipe")+'">'+(isSaved?"♥":"♡")+'</button></div>'+
   '<div class="card-body"><div class="card-meta"><span class="type '+g+'">'+html(label(r))+'</span>'+(who?'<span class="time">From '+html(who)+'</span>':"")+'</div>'+
-  '<h3 title="'+html(r.title)+'">'+html(r.title)+'</h3><p>'+html(r.summary)+'</p><div class="card-footer"><small>'+status(r)+'</small>'+
+  '<h3 title="'+html(r.title)+'"><a class="card-title" href="?recipe='+encodeURIComponent(r.slug)+'" data-open="'+html(r.slug)+'">'+html(r.title)+'</a></h3><p>'+html(r.summary)+'</p><div class="card-footer"><small>'+status(r)+'</small>'+
   '<button type="button" data-open="'+html(r.slug)+'" class="open-recipe">View recipe <span>↗</span></button></div></div></article>';
 }
 function render() {
@@ -247,7 +247,10 @@ document.addEventListener("click",e=>{
  const saveButton=e.target.closest("[data-save]");
  if(saveButton){save(saveButton.dataset.save);return;}
  const open=e.target.closest("[data-open]");
- if(open){openRecipe(open.dataset.open);return;}
+ if(open){
+  if(open.tagName==="A"&&(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey))return; // let the browser open a new tab
+  e.preventDefault();openRecipe(open.dataset.open);return;
+ }
  const cookButton=e.target.closest("[data-cook]");
  if(cookButton){cook=cook===cookButton.dataset.cook?"":cookButton.dataset.cook;resetPaging();render();$("#recipes").scrollIntoView({behavior:"smooth"});return;}
  const close=e.target.closest("[data-close]");
